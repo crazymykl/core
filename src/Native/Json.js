@@ -1,5 +1,3 @@
-//import Maybe, Native.Array, Native.List, Native.Utils, Result //
-
 var _elm_lang$core$Native_Json = function() {
 
 
@@ -59,6 +57,16 @@ function decodeField(field, decoder)
 	};
 }
 
+function decodeIndex(index, decoder)
+{
+	return {
+		ctor: '<decoder>',
+		tag: 'index',
+		index: index,
+		decoder: decoder
+	};
+}
+
 function decodeKeyValuePairs(decoder)
 {
 	return {
@@ -68,21 +76,11 @@ function decodeKeyValuePairs(decoder)
 	};
 }
 
-function decodeObject(f, decoders)
+function mapMany(f, decoders)
 {
 	return {
 		ctor: '<decoder>',
 		tag: 'map-many',
-		func: f,
-		decoders: decoders
-	};
-}
-
-function decodeTuple(f, decoders)
-{
-	return {
-		ctor: '<decoder>',
-		tag: 'tuple',
 		func: f,
 		decoders: decoders
 	};
@@ -93,16 +91,6 @@ function andThen(callback, decoder)
 	return {
 		ctor: '<decoder>',
 		tag: 'andThen',
-		decoder: decoder,
-		callback: callback
-	};
-}
-
-function customAndThen(decoder, callback)
-{
-	return {
-		ctor: '<decoder>',
-		tag: 'customAndThen',
 		decoder: decoder,
 		callback: callback
 	};
@@ -120,87 +108,29 @@ function oneOf(decoders)
 
 // DECODING OBJECTS
 
-function decodeObject1(f, d1)
+function map(f, d1)
 {
-	return decodeObject(f, [d1]);
+	return mapMany(f, [d1]);
 }
 
-function decodeObject2(f, d1, d2)
+function map2(f, d1, d2)
 {
-	return decodeObject(f, [d1, d2]);
+	return mapMany(f, [d1, d2]);
 }
 
-function decodeObject3(f, d1, d2, d3)
+function map3(f, d1, d2, d3)
 {
-	return decodeObject(f, [d1, d2, d3]);
+	return mapMany(f, [d1, d2, d3]);
 }
 
-function decodeObject4(f, d1, d2, d3, d4)
+function map4(f, d1, d2, d3, d4)
 {
-	return decodeObject(f, [d1, d2, d3, d4]);
+	return mapMany(f, [d1, d2, d3, d4]);
 }
 
-function decodeObject5(f, d1, d2, d3, d4, d5)
+function map5(f, d1, d2, d3, d4, d5)
 {
-	return decodeObject(f, [d1, d2, d3, d4, d5]);
-}
-
-function decodeObject6(f, d1, d2, d3, d4, d5, d6)
-{
-	return decodeObject(f, [d1, d2, d3, d4, d5, d6]);
-}
-
-function decodeObject7(f, d1, d2, d3, d4, d5, d6, d7)
-{
-	return decodeObject(f, [d1, d2, d3, d4, d5, d6, d7]);
-}
-
-function decodeObject8(f, d1, d2, d3, d4, d5, d6, d7, d8)
-{
-	return decodeObject(f, [d1, d2, d3, d4, d5, d6, d7, d8]);
-}
-
-
-// DECODING TUPLES
-
-function decodeTuple1(f, d1)
-{
-	return decodeTuple(f, [d1]);
-}
-
-function decodeTuple2(f, d1, d2)
-{
-	return decodeTuple(f, [d1, d2]);
-}
-
-function decodeTuple3(f, d1, d2, d3)
-{
-	return decodeTuple(f, [d1, d2, d3]);
-}
-
-function decodeTuple4(f, d1, d2, d3, d4)
-{
-	return decodeTuple(f, [d1, d2, d3, d4]);
-}
-
-function decodeTuple5(f, d1, d2, d3, d4, d5)
-{
-	return decodeTuple(f, [d1, d2, d3, d4, d5]);
-}
-
-function decodeTuple6(f, d1, d2, d3, d4, d5, d6)
-{
-	return decodeTuple(f, [d1, d2, d3, d4, d5, d6]);
-}
-
-function decodeTuple7(f, d1, d2, d3, d4, d5, d6, d7)
-{
-	return decodeTuple(f, [d1, d2, d3, d4, d5, d6, d7]);
-}
-
-function decodeTuple8(f, d1, d2, d3, d4, d5, d6, d7, d8)
-{
-	return decodeTuple(f, [d1, d2, d3, d4, d5, d6, d7, d8]);
+	return mapMany(f, [d1, d2, d3, d4, d5]);
 }
 
 
@@ -229,11 +159,6 @@ function badField(field, nestedProblems)
 function badOneOf(problems)
 {
 	return { tag: 'oneOf', problems: problems };
-}
-
-function badCustom(msg)
-{
-	return { tag: 'custom', msg: msg };
 }
 
 function bad(msg)
@@ -272,11 +197,6 @@ function badToString(problem)
 				return 'I ran into the following problems'
 					+ (context === '_' ? '' : ' at ' + context)
 					+ ':\n\n' + problems.join('\n');
-
-			case 'custom':
-				return 'A `customDecoder` failed'
-					+ (context === '_' ? '' : ' at ' + context)
-					+ ' with the message: ' + problem.msg;
 
 			case 'fail':
 				return 'I ran into a `fail` decoder'
@@ -399,12 +319,6 @@ function runHelp(decoder, value)
 			}
 			return ok(_elm_lang$core$Native_Array.fromJSArray(array));
 
-		case 'maybe':
-			var result = runHelp(decoder.decoder, value);
-			return (result.tag === 'ok')
-				? ok(_elm_lang$core$Maybe$Just(result.value))
-				: ok(_elm_lang$core$Maybe$Nothing);
-
 		case 'field':
 			var field = decoder.field;
 			if (typeof value !== 'object' || value === null || !(field in value))
@@ -416,6 +330,18 @@ function runHelp(decoder, value)
 			return (result.tag === 'ok')
 				? result
 				: badField(field, result);
+
+		case 'index':
+			var index = decoder.index;
+			if (typeof value !== 'object' || value === null || !(index in value))
+			{
+				return badPrimitive('something at array index ' + index, value);
+			}
+
+			var result = runHelp(decoder.decoder, value[index]);
+			return (result.tag === 'ok')
+				? result
+				: badIndex(index, result);
 
 		case 'key-value':
 			if (typeof value !== 'object' || value === null || value instanceof Array)
@@ -449,40 +375,6 @@ function runHelp(decoder, value)
 				answer = answer(result.value);
 			}
 			return ok(answer);
-
-		case 'tuple':
-			var decoders = decoder.decoders;
-			var len = decoders.length;
-
-			if ( !(value instanceof Array) || value.length !== len )
-			{
-				return badPrimitive('a Tuple with ' + len + ' entries', value);
-			}
-
-			var answer = decoder.func;
-			for (var i = 0; i < len; i++)
-			{
-				var result = runHelp(decoders[i], value[i]);
-				if (result.tag !== 'ok')
-				{
-					return badIndex(i, result);
-				}
-				answer = answer(result.value);
-			}
-			return ok(answer);
-
-		case 'customAndThen':
-			var result = runHelp(decoder.decoder, value);
-			if (result.tag !== 'ok')
-			{
-				return result;
-			}
-			var realResult = decoder.callback(result.value);
-			if (realResult.ctor === 'Err')
-			{
-				return badCustom(realResult._0);
-			}
-			return ok(realResult._0);
 
 		case 'andThen':
 			var result = runHelp(decoder.decoder, value);
@@ -549,23 +441,19 @@ function equality(a, b)
 
 		case 'list':
 		case 'array':
-		case 'maybe':
 		case 'key-value':
 			return equality(a.decoder, b.decoder);
 
 		case 'field':
 			return a.field === b.field && equality(a.decoder, b.decoder);
 
+		case 'index':
+			return a.index === b.index && equality(a.decoder, b.decoder);
+
 		case 'map-many':
-		case 'tuple':
-			if (a.func !== b.func)
-			{
-				return false;
-			}
-			return listEquality(a.decoders, b.decoders);
+			return a.func === b.func && listEquality(a.decoders, b.decoders);
 
 		case 'andThen':
-		case 'customAndThen':
 			return a.callback === b.callback && equality(a.decoder, b.decoder);
 
 		case 'oneOf':
@@ -625,30 +513,18 @@ return {
 	decodeContainer: F2(decodeContainer),
 
 	decodeField: F2(decodeField),
+	decodeIndex: F2(decodeIndex),
 
-	decodeObject1: F2(decodeObject1),
-	decodeObject2: F3(decodeObject2),
-	decodeObject3: F4(decodeObject3),
-	decodeObject4: F5(decodeObject4),
-	decodeObject5: F6(decodeObject5),
-	decodeObject6: F7(decodeObject6),
-	decodeObject7: F8(decodeObject7),
-	decodeObject8: F9(decodeObject8),
+	map: F2(map),
+	map2: F3(map2),
+	map3: F4(map3),
+	map4: F5(map4),
+	map5: F6(map5),
 	decodeKeyValuePairs: decodeKeyValuePairs,
 
-	decodeTuple1: F2(decodeTuple1),
-	decodeTuple2: F3(decodeTuple2),
-	decodeTuple3: F4(decodeTuple3),
-	decodeTuple4: F5(decodeTuple4),
-	decodeTuple5: F6(decodeTuple5),
-	decodeTuple6: F7(decodeTuple6),
-	decodeTuple7: F8(decodeTuple7),
-	decodeTuple8: F9(decodeTuple8),
-
 	andThen: F2(andThen),
-	customAndThen: F2(customAndThen),
-	fail: fail,
 	succeed: succeed,
+	fail: fail,
 	oneOf: oneOf,
 
 	identity: identity,
