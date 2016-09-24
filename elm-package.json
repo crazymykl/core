@@ -15,6 +15,7 @@
         "Date",
         "Debug",
         "Dict",
+        "Http",
         "Json.Decode",
         "Json.Encode",
         "List",
