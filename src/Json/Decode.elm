@@ -6,7 +6,7 @@ module Json.Decode exposing
   , decodeString, decodeValue, Value
   , map, map2, map3, map4, map5
   , field, index, null, value
-  , andThen, succeed, fail
+  , lazy, andThen, succeed, fail
   )
 
 {-| Turn JSON values into Elm values. Definitely check out this [intro to JSON
@@ -36,7 +36,7 @@ decoders][guide] to get a feel for how this library works!
 @docs field, index, null, value
 
 # Fancy Decoding
-@docs andThen, succeed, fail
+@docs lazy, andThen, succeed, fail
 
 -}
 
@@ -278,6 +278,12 @@ value =
 -- FANCY DECODERS
 
 
+lazy : (() -> Decoder a) -> Decoder a
+lazy thunk =
+  value
+    |> andThen (\jsValue -> decodeValue (thunk ()) jsValue)
+
+
 andThen : (a -> Decoder b) -> Decoder a -> Decoder b
 andThen =
   Native.Json.andThen
@@ -291,3 +297,4 @@ succeed =
 fail : String -> Decoder a
 fail =
   Native.Json.fail
+
