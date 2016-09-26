@@ -1,6 +1,6 @@
 module Json.Decode exposing
   ( Decoder, string, int, float, bool
-  , object, required, requiredAt, optional, optionalAt, hardcoded, custom
+  , object, required, optional, hardcoded, custom
   , nullable, list, array, dict, keyValuePairs
   , oneOf
   , decodeString, decodeValue, Value
@@ -18,7 +18,7 @@ decoders][guide] to get a feel for how this library works!
 @docs Decoder, string, int, float, bool
 
 # Objects
-@docs object, required, requiredAt, optional, optionalAt, hardcoded, custom
+@docs object, required, optional, hardcoded, custom
 
 # Data Structures
 @docs nullable, list, array, dict, keyValuePairs
@@ -100,12 +100,6 @@ required name decoder funcDecoder =
     field name decoder
 
 
-requiredAt : List String -> Decoder a -> Decoder (a -> b) -> Decoder b
-requiredAt names decoder funcDecoder =
-  map2 apply funcDecoder <|
-    List.foldr field decoder names
-
-
 optional : String -> Decoder a -> a -> Decoder (a -> b) -> Decoder b
 optional name decoder fallback funcDecoder =
   map2 apply funcDecoder <|
@@ -113,16 +107,6 @@ optional name decoder fallback funcDecoder =
       [ field name decoder
       , succeed fallback
       ]
-
-
-optionalAt : List String -> Decoder a -> a -> Decoder (a -> b) -> Decoder b
-optionalAt names decoder fallback funcDecoder =
-  let
-    attempt =
-      oneOf [ decoder, succeed fallback ]
-  in
-    map2 apply funcDecoder <|
-      List.foldr field attempt names
 
 
 hardcoded : a -> Decoder (a -> b) -> Decoder b
