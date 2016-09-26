@@ -42,11 +42,12 @@ decoders][guide] to get a feel for how this library works!
 
 
 import Array exposing (Array)
+import Basics exposing ((<|), (|>))
 import Dict exposing (Dict)
 import Json.Encode as JsEncode
 import List
-import Maybe exposing (Maybe)
-import Result exposing (Result)
+import Maybe exposing ( Maybe(..) )
+import Result exposing ( Result(..) )
 import Native.Json
 
 
@@ -126,8 +127,7 @@ optionalAt names decoder fallback funcDecoder =
 
 hardcoded : a -> Decoder (a -> b) -> Decoder b
 hardcoded value funcDecoder =
-  map2 apply funcDecoder
-    |> succeed value
+  map2 apply funcDecoder (succeed value)
 
 
 custom : Decoder a -> Decoder (a -> b) -> Decoder b
@@ -143,7 +143,7 @@ nullable : Decoder a -> Decoder (Maybe a)
 nullable decoder =
   oneOf
     [ null Nothing
-    , map Just decode
+    , map Just decoder
     ]
 
 
@@ -280,8 +280,16 @@ value =
 
 lazy : (() -> Decoder a) -> Decoder a
 lazy thunk =
-  value
-    |> andThen (\jsValue -> decodeValue (thunk ()) jsValue)
+  let
+    lazilyDecode jsValue =
+      case decodeValue (thunk ()) jsValue of
+        Ok value ->
+          succeed value
+
+        Err msg ->
+          fail msg
+  in
+    andThen lazilyDecode value
 
 
 andThen : (a -> Decoder b) -> Decoder a -> Decoder b
