@@ -2,6 +2,11 @@
 
 var _elm_lang$core$Native_String = function() {
 
+function codepoints(str)
+{
+	return str.match(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\uD800-\uDFFF]/g) || "";
+}
+
 function isEmpty(str)
 {
 	return str.length === 0;
@@ -12,10 +17,11 @@ function cons(chr, str)
 }
 function uncons(str)
 {
-	var hd = str[0];
+	var arr = codepoints(str);
+	var hd = arr[0];
 	if (hd)
 	{
-		return _elm_lang$core$Maybe$Just(_elm_lang$core$Native_Utils.Tuple2(_elm_lang$core$Native_Utils.chr(hd), str.slice(1)));
+		return _elm_lang$core$Maybe$Just(_elm_lang$core$Native_Utils.Tuple2(_elm_lang$core$Native_Utils.chr(hd), arr.slice(1).join('')));
 	}
 	return _elm_lang$core$Maybe$Nothing;
 }
@@ -29,11 +35,11 @@ function concat(strs)
 }
 function length(str)
 {
-	return str.length;
+	return codepoints(str).length;
 }
 function map(f, str)
 {
-	var out = str.split('');
+	var out = codepoints(str);
 	for (var i = out.length; i--; )
 	{
 		out[i] = f(_elm_lang$core$Native_Utils.chr(out[i]));
@@ -42,26 +48,28 @@ function map(f, str)
 }
 function filter(pred, str)
 {
-	return str.split('').map(_elm_lang$core$Native_Utils.chr).filter(pred).join('');
+	return codepoints(str).map(_elm_lang$core$Native_Utils.chr).filter(pred).join('');
 }
 function reverse(str)
 {
-	return str.split('').reverse().join('');
+	return codepoints(str).reverse().join('');
 }
 function foldl(f, b, str)
 {
-	var len = str.length;
+	var arr = codepoints(str);
+	var len = arr.length;
 	for (var i = 0; i < len; ++i)
 	{
-		b = A2(f, _elm_lang$core$Native_Utils.chr(str[i]), b);
+		b = A2(f, _elm_lang$core$Native_Utils.chr(arr[i]), b);
 	}
 	return b;
 }
 function foldr(f, b, str)
 {
-	for (var i = str.length; i--; )
+	var arr = codepoints(str);
+	for (var i = arr.length; i--; )
 	{
-		b = A2(f, _elm_lang$core$Native_Utils.chr(str[i]), b);
+		b = A2(f, _elm_lang$core$Native_Utils.chr(arr[i]), b);
 	}
 	return b;
 }
@@ -88,23 +96,23 @@ function repeat(n, str)
 }
 function slice(start, end, str)
 {
-	return str.slice(start, end);
+	return codepoints(str).slice(start, end).join('');
 }
 function left(n, str)
 {
-	return n < 1 ? '' : str.slice(0, n);
+	return n < 1 ? '' : slice(0, n, str);
 }
 function right(n, str)
 {
-	return n < 1 ? '' : str.slice(-n);
+	return n < 1 ? '' : slice(-n, undefined, str);
 }
 function dropLeft(n, str)
 {
-	return n < 1 ? str : str.slice(n);
+	return n < 1 ? str : slice(n, undefined, str);
 }
 function dropRight(n, str)
 {
-	return n < 1 ? str : str.slice(0, -n);
+	return n < 1 ? str : slice(0, -n, str);
 }
 function pad(n, chr, str)
 {
@@ -153,9 +161,10 @@ function toLower(str)
 
 function any(pred, str)
 {
-	for (var i = str.length; i--; )
+	var arr = codepoints(str);
+	for (var i = arr.length; i--; )
 	{
-		if (pred(_elm_lang$core$Native_Utils.chr(str[i])))
+		if (pred(_elm_lang$core$Native_Utils.chr(arr[i])))
 		{
 			return true;
 		}
@@ -164,9 +173,10 @@ function any(pred, str)
 }
 function all(pred, str)
 {
-	for (var i = str.length; i--; )
+	var arr = codepoints(str);
+	for (var i = arr.length; i--; )
 	{
-		if (!pred(_elm_lang$core$Native_Utils.chr(str[i])))
+		if (!pred(_elm_lang$core$Native_Utils.chr(arr[i])))
 		{
 			return false;
 		}
@@ -189,22 +199,26 @@ function endsWith(sub, str)
 }
 function indexes(sub, str)
 {
-	var subLen = sub.length;
-	
-	if (subLen < 1)
+	var arr = codepoints(str);
+	var subarr = codepoints(sub);
+
+	if (subarr.length < 1)
 	{
 		return _elm_lang$core$Native_List.Nil;
 	}
 
-	var i = 0;
+	var j;
 	var is = [];
 
-	while ((i = str.indexOf(sub, i)) > -1)
+	for (var i = 0; i < arr.length; ++i)
 	{
-		is.push(i);
-		i = i + subLen;
-	}	
-	
+		for (j = 0; j < subarr.length && arr[i+j] == subarr[j]; ++j);
+		if (j === subarr.length)
+		{
+			is.push(i);
+		}
+	}
+
 	return _elm_lang$core$Native_List.fromArray(is);
 }
 
@@ -274,7 +288,7 @@ function toFloat(s)
 
 function toList(str)
 {
-	return _elm_lang$core$Native_List.fromArray(str.split('').map(_elm_lang$core$Native_Utils.chr));
+	return _elm_lang$core$Native_List.fromArray(codepoints(str).map(_elm_lang$core$Native_Utils.chr));
 }
 function fromList(chars)
 {
